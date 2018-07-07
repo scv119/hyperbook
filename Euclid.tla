@@ -1,0 +1,75 @@
+------------------------------- MODULE Euclid -------------------------------
+EXTENDS Integers, GCD, TLC
+
+CONSTANTS M, N
+
+ASSUME /\ M \in Nat \ {0}
+       /\ N \in Nat \ {0}
+       
+(*
+--fair algorithm Euclid {
+    variables x \in 1 .. N, y \in 1 .. M, x0 = x, y0 = y;
+    {
+        while (x # y) {
+            if (x < y) {
+                y := y - x
+            } else {
+                x := x - y
+            }
+        };
+        
+       
+    }
+}
+*) 
+
+\* BEGIN TRANSLATION
+VARIABLES x, y, x0, y0, pc
+
+vars == << x, y, x0, y0, pc >>
+
+Init == (* Global variables *)
+        /\ x \in 1 .. N
+        /\ y \in 1 .. M
+        /\ x0 = x
+        /\ y0 = y
+        /\ pc = "Lbl_1"
+
+Lbl_1 == /\ pc = "Lbl_1"
+         /\ IF x # y
+               THEN /\ IF x < y
+                          THEN /\ y' = y - x
+                               /\ x' = x
+                          ELSE /\ x' = x - y
+                               /\ y' = y
+                    /\ pc' = "Lbl_1"
+               ELSE /\ pc' = "Done"
+                    /\ UNCHANGED << x, y >>
+         /\ UNCHANGED << x0, y0 >>
+
+Next == Lbl_1
+           \/ (* Disjunct to prevent deadlock on termination *)
+              (pc = "Done" /\ UNCHANGED vars)
+
+Spec == /\ Init /\ [][Next]_vars
+        /\ WF_vars(Next)
+
+Termination == <>(pc = "Done")
+
+\* END TRANSLATION
+
+
+PartialCorrectness == (pc = "Done") => ( x= y ) /\ ( x = GCD(x0, y0))
+
+TypeOK == /\ x \in Nat \ {0}
+          /\ y \in Nat \ {0}
+          
+Inv == /\ TypeOK
+       /\ GCD(x, y) = GCD(M, N)
+       /\ (pc = "Done") => ( x= y )
+
+
+=============================================================================
+\* Modification History
+\* Last modified Sat Jul 07 16:18:30 PDT 2018 by chenshen
+\* Created Fri Jul 06 09:36:19 PDT 2018 by chenshen
